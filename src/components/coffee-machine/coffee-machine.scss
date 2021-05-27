@@ -1,0 +1,91 @@
+@import "./../../styles/common.scss";
+
+.coffee-machine {
+  min-width: 300px;
+  max-width: 700px;
+  border: 3px solid $gray1;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 2px;
+
+  .beverages {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+
+    .dz-button {
+      flex-shrink: 0;
+      margin: 0px 10px 5px 0px;
+      font-size: 16px;
+      padding: 10px 20px;
+    }
+  }
+
+  .ingredients {
+    margin-bottom: 30px;
+    align-self: center;
+
+    .ingredient-indicator {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+
+      .dot {
+        border-radius: 11px;
+        width: 10px;
+        height: 10px;
+        margin-right: 10px;
+      }
+
+      .low {
+        background-color: $red0;
+      }
+
+      .ok {
+        background-color: $green0;
+      }
+    }
+  }
+
+  .outlets {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .outlet-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0px 20px 5px 0px;
+    }
+
+    .outlet {
+      width: 200px;
+      height: 200px;
+      box-sizing: border-box;
+      overflow: auto;
+      border-radius: 8px;
+      background-color: $gray2;
+      color: $gray4;
+      padding: 10px;
+    }
+
+    .outlet-msg {
+      margin-bottom: 10px;
+
+      &.success {
+        color: $green0;
+      }
+
+      &.error {
+        color: $red0;
+      }
+    }
+
+    .press-btn {
+      margin-top: 20px;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "dunzo-assignment",
+  "version": "1.0.0",
+  "description": "Dunzo's machine coding assignment",
+  "main": "index.js",
+  "author": "Martand",
+  "license": "MIT",
+  "scripts": {
+    "webpack:dev": "npx webpack --config webpack.config.js"
+  },
+  "dependencies": {
+    "core-js": "^3.13.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "regenerator-runtime": "^0.13.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-react": "^7.13.13",
+    "@babel/preset-typescript": "^7.13.0",
+    "@types/react": "^17.0.8",
+    "@types/react-dom": "^17.0.5",
+    "babel-loader": "^8.2.2",
+    "css-loader": "^5.2.6",
+    "node-sass": "^6.0.0",
+    "sass-loader": "^11.1.1",
+    "source-map-loader": "^3.0.0",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^9.2.2",
+    "typescript": "^4.3.2",
+    "webpack": "^5.37.1",
+    "webpack-cli": "^4.7.0"
+  }
+}
