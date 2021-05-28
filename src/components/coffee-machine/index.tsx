@@ -6,10 +6,12 @@ import machineConfigs, {
 import {
   TBeverageEventData,
   TIngredientsStatusEventData,
+  TTestCase,
 } from "../../types/common";
 import { getIngredientsIndicator } from "../../utils/helper";
 
 import "./coffee-machine.scss";
+import { getTestCase } from "../../configs/test-cases";
 
 type TProps = {};
 
@@ -19,16 +21,24 @@ type TProps = {};
  */
 
 const CoffeeMachineInterface: FC<TProps> = () => {
+  const [selectedConfigIndex, setSelectedConfigIndex] = useState<number>(0);
+  const [selectedBeverageIndex, setSelectedBeverageIndex] = useState<number>(0);
+
   const coffeeMachine = useRef<CoffeeMachine>(
-    new CoffeeMachine(convertConfigToMachineParams(machineConfigs[0]))
+    new CoffeeMachine(
+      convertConfigToMachineParams(machineConfigs(selectedConfigIndex))
+    )
   );
 
   const beverages = useRef<string[]>(coffeeMachine.current.getBeveragesList());
   const numOutlets = useRef<number>(coffeeMachine.current.getNumOutlets());
   const outletsRef = useRef<HTMLDivElement | null>(null);
+  const configCount = useRef<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const testCase = useRef<TTestCase[]>([]);
+  const testCasesRef = useRef<HTMLTextAreaElement | null>(null);
+  const testResultRef = useRef<HTMLTextAreaElement | null>(null);
+  const isRunningTestCase = useRef<boolean>(false);
 
-  const [selectedConfigIndex, setSelectedConfigIndex] = useState<number>(0);
-  const [selectedBeverageIndex, setSelectedBeverageIndex] = useState<number>(0);
   const [ingredientsStatus, setIngredientsStatus] =
     useState<TIngredientsStatusEventData>(
       coffeeMachine.current.getIngredients()
@@ -131,13 +141,20 @@ const CoffeeMachineInterface: FC<TProps> = () => {
     const outletRef =
       outletsRef.current?.children[outlet]?.querySelector(".outlet");
 
+    const message = success
+      ? name + " was served."
+      : name + " could not be served.";
+
     if (outletRef) {
       outletRef.innerHTML += success
-        ? "<span class='outlet-msg success'>" + name + " was served.</span>"
-        : "<span class='outlet-msg error'>" +
-          name +
-          " could not be served.</span>";
+        ? "<span class='outlet-msg success'>" + message + "</span>"
+        : "<span class='outlet-msg error'>" + message + "</span>";
       outletRef.innerHTML += "<br/>";
+    }
+
+    if (isRunningTestCase && testResultRef.current) {
+      testResultRef.current.innerHTML += message;
+      testResultRef.current.innerHTML += "\n";
     }
   };
 
@@ -181,7 +198,7 @@ const CoffeeMachineInterface: FC<TProps> = () => {
     }
 
     coffeeMachine.current = new CoffeeMachine(
-      convertConfigToMachineParams(machineConfigs[index])
+      convertConfigToMachineParams(machineConfigs(index))
     );
     beverages.current = coffeeMachine.current.getBeveragesList();
     numOutlets.current = coffeeMachine.current.getNumOutlets();
@@ -189,6 +206,40 @@ const CoffeeMachineInterface: FC<TProps> = () => {
     setSelectedConfigIndex(index);
     setSelectedBeverageIndex(0);
     setIngredientsStatus(coffeeMachine.current.getIngredients());
+  };
+
+  /**
+   * runs the test cases for selected number of outlets
+   */
+
+  const runTestCase = (): void => {
+    isRunningTestCase.current = true;
+
+    testCase.current.forEach((testCase) => {
+      if (testCasesRef.current) {
+        testCasesRef.current.innerHTML += JSON.stringify(testCase);
+        testCasesRef.current.innerHTML += "\n";
+      }
+
+      if (testCase.type === "refillAll") {
+        Object.keys(coffeeMachine.current.getIngredients()).forEach(
+          (ingredient) => {
+            coffeeMachine.current.refill(ingredient);
+          }
+        );
+      } else if (testCase.type === "refill") {
+        coffeeMachine.current.refill(testCase.ingredient ?? "");
+      } else {
+        showProcessingMessage(testCase.outlet ?? 0);
+
+        coffeeMachine.current.makeBeverage(
+          testCase.beverage ?? "",
+          testCase.outlet ?? 0
+        );
+      }
+    });
+
+    isRunningTestCase.current = false;
   };
 
   useEffect(() => {
@@ -212,29 +263,40 @@ const CoffeeMachineInterface: FC<TProps> = () => {
     };
   }, []);
 
+  useEffect(() => {
+    testCase.current = getTestCase(
+      coffeeMachine.current.getNumOutlets(),
+      Object.keys(coffeeMachine.current.getIngredients()),
+      coffeeMachine.current.getBeveragesList()
+    );
+  }, [selectedConfigIndex]);
+
   return (
     <div className="coffee-machine-wrap">
-      <h4>
-        Different configs have different amount of ingredients and different
-        number of outlets
-      </h4>
+      <h4>Select number of outlets</h4>
 
       <div className="configs">
-        {machineConfigs.map((config, index) => {
-          return (
-            <button
-              className={`dz-button ${
-                index === selectedConfigIndex ? "selected" : ""
-              }`}
-              key={`config-${index}`}
-              onClick={() => {
-                resetConfig(index);
-              }}
-            >
-              {`Config ${index + 1}`}
-            </button>
-          );
-        })}
+        <>
+          {configCount.current.map((number, index) => {
+            return (
+              <button
+                className={`dz-button ${
+                  index === selectedConfigIndex ? "selected" : ""
+                }`}
+                key={`config-${index}`}
+                onClick={() => {
+                  resetConfig(index);
+                }}
+              >
+                {`${index + 1}`}
+              </button>
+            );
+          })}
+
+          <button className="dz-button" onClick={() => runTestCase()}>
+            Run test case (test case and it's result are at the bottom)
+          </button>
+        </>
       </div>
 
       <div className="coffee-machine">
@@ -255,6 +317,28 @@ const CoffeeMachineInterface: FC<TProps> = () => {
         <div className="ingredients">{getIngredientsPanel()}</div>
         <div className="outlets" ref={outletsRef}>
           {getOutletsJsx()}
+        </div>
+      </div>
+
+      <div className="test-cases">
+        <div className="textarea-wrap">
+          <h3>Test case</h3>
+          <textarea
+            ref={testCasesRef}
+            className="test-case"
+            readOnly={true}
+            rows={30}
+          />
+        </div>
+
+        <div className="textarea-wrap">
+          <h3>Result</h3>
+          <textarea
+            ref={testResultRef}
+            className="test-result"
+            readOnly={true}
+            rows={30}
+          />
         </div>
       </div>
     </div>

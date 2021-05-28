@@ -24,7 +24,7 @@ class CoffeeMachine {
 
   private static DEFAULT_INGREDIENTS_WARNING_LIMIT = 150;
   private static BEVERAGE_MAKE_DELAY_MS = 5000;
-  private static MAX_INGREDIENT_LIMIT = 5000;
+  private static MAX_INGREDIENT_LIMIT = 1000;
 
   constructor(params: TCoffeeMachineParams) {
     this._state = {
@@ -48,29 +48,27 @@ class CoffeeMachine {
     const ingredients = Object.keys(recipie);
 
     return new Promise<boolean>((resolve) => {
+      let i;
+      for (i = 0; i < ingredients.length; ++i) {
+        const ingredient = ingredients[i];
+
+        if ((this._state.ingredients[ingredient] ?? 0) < recipie[ingredient]) {
+          break;
+        }
+      }
+
+      if (i < ingredients.length) {
+        resolve(false);
+        return;
+      }
+
+      ingredients.forEach((ingredient) => {
+        this._state.ingredients[ingredient] -= recipie[ingredient];
+      });
+
+      dispatchCustomData("INGREDIENTS_STATUS", this._state.ingredients);
+
       setTimeout(() => {
-        let i;
-        for (i = 0; i < ingredients.length; ++i) {
-          const ingredient = ingredients[i];
-
-          if (
-            (this._state.ingredients[ingredient] ?? 0) < recipie[ingredient]
-          ) {
-            break;
-          }
-        }
-
-        if (i < ingredients.length) {
-          resolve(false);
-          return;
-        }
-
-        ingredients.forEach((ingredient) => {
-          this._state.ingredients[ingredient] -= recipie[ingredient];
-        });
-
-        dispatchCustomData("INGREDIENTS_STATUS", this._state.ingredients);
-
         resolve(true);
       }, CoffeeMachine.BEVERAGE_MAKE_DELAY_MS);
     });

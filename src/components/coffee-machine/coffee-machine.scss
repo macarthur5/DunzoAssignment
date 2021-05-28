@@ -1,7 +1,7 @@
 @import "./../../styles/common.scss";
 
 .coffee-machine-wrap {
-  margin: 50px 0px 0px 30px;
+  margin: 50px;
 
   .configs {
     display: flex;
@@ -18,7 +18,6 @@
 
   .coffee-machine {
     min-width: 300px;
-    max-width: 900px;
     width: auto;
     border: 3px solid $gray1;
     padding: 20px 10px;
@@ -116,6 +115,23 @@
       .press-btn {
         margin-right: 15px;
       }
+    }
+  }
+
+  .test-cases {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 50px;
+
+    .textarea-wrap {
+      width: 50%;
+    }
+
+    textarea {
+      width: 90%;
+      padding: 10px;
+      font-size: 16px;
     }
   }
 }

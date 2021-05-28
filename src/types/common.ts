@@ -35,3 +35,13 @@ export type TIngredientsStatusEventData = { [key: string]: number };
  * The type for the data telling ingredients and their indicators - low/ok
  */
 export type TIngredientsIndicator = { [key: string]: "ok" | "low" };
+
+/**
+ * Each test case is an array of this type
+ */
+export type TTestCase = {
+  type: "refill" | "make" | "refillAll";
+  beverage?: string;
+  ingredient?: string;
+  outlet?: number;
+};
