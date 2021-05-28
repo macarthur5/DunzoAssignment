@@ -102,13 +102,18 @@ Object.defineProperty(exports, "__esModule", ({
 
 var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 
-var config_1 = __importStar(__webpack_require__(/*! ../../configs/config */ "./src/configs/config.ts"));
-
 var CoffeeMachine_1 = __importDefault(__webpack_require__(/*! ../../utils/CoffeeMachine */ "./src/utils/CoffeeMachine.ts"));
+
+var config_1 = __importStar(__webpack_require__(/*! ../../configs/config */ "./src/configs/config.ts"));
 
 var helper_1 = __webpack_require__(/*! ../../utils/helper */ "./src/utils/helper.ts");
 
 __webpack_require__(/*! ./coffee-machine.scss */ "./src/components/coffee-machine/coffee-machine.scss");
+/**
+ * A react component that uses @CoffeeMachine instance to work. It creates the UI which helps us see the coffee machine in action.
+ * The only way this react component communicates with the asynchronous functions of the @CoffeeMachine instance is via custom events.
+ */
+
 
 var CoffeeMachineInterface = function CoffeeMachineInterface() {
   var coffeeMachine = react_1.useRef(new CoffeeMachine_1.default(config_1.convertConfigToMachineParams(config_1.default[0])));
@@ -117,12 +122,21 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
   var outletsRef = react_1.useRef(null);
 
   var _a = react_1.useState(0),
-      selectedBeverageIndex = _a[0],
-      setSelectedBeverageIndex = _a[1];
+      selectedConfigIndex = _a[0],
+      setSelectedConfigIndex = _a[1];
 
-  var _b = react_1.useState(coffeeMachine.current.getIngredients()),
-      ingredientsStatus = _b[0],
-      setIngredientsStatus = _b[1];
+  var _b = react_1.useState(0),
+      selectedBeverageIndex = _b[0],
+      setSelectedBeverageIndex = _b[1];
+
+  var _c = react_1.useState(coffeeMachine.current.getIngredients()),
+      ingredientsStatus = _c[0],
+      setIngredientsStatus = _c[1];
+  /**
+   *
+   * @returns the jsx for the outlets section
+   */
+
 
   var getOutletsJsx = function getOutletsJsx() {
     var jsx = [];
@@ -133,13 +147,20 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
         key: "outlet-" + i
       }, react_1.default.createElement("h3", null, "Outlet " + (i + 1)), react_1.default.createElement("span", {
         className: "outlet"
-      }), react_1.default.createElement("button", {
+      }), react_1.default.createElement("div", {
+        className: "button-wrap"
+      }, react_1.default.createElement("button", {
         className: "press-btn dz-button",
         onClick: function onClick() {
           showProcessingMessage(i);
           coffeeMachine.current.makeBeverage(beverages.current[selectedBeverageIndex], i);
         }
-      }, "Press")));
+      }, "Press"), react_1.default.createElement("button", {
+        className: "clear-btn dz-button",
+        onClick: function onClick() {
+          clearOutlet(i);
+        }
+      }, "Clear"))));
     };
 
     for (var i = 0; i < numOutlets.current; ++i) {
@@ -148,6 +169,11 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
 
     return jsx;
   };
+  /**
+   *
+   * @returns the jsx for the ingredients panel
+   */
+
 
   var getIngredientsPanel = function getIngredientsPanel() {
     var jsx = [];
@@ -162,12 +188,27 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
         style: {
           marginLeft: "5px"
         }
-      }, "(", ingredientsStatus[key], ")")));
+      }, "(", ingredientsStatus[key], "/", CoffeeMachine_1.default.getMaxIngredientLimit(), ")"), react_1.default.createElement("span", {
+        style: {
+          marginLeft: "10px"
+        },
+        className: "dz-button refill-link",
+        onClick: function onClick() {
+          coffeeMachine.current.refill(key);
+        }
+      }, "Refill")));
     });
     return react_1.default.createElement("div", {
       className: "ingredients"
     }, react_1.default.createElement("h3", null, "Ingredients"), jsx);
   };
+  /**
+   *
+   * @param detail message to be displayed on an Outlet
+   *
+   * appends a message on a particular outlet based on data passed
+   */
+
 
   var populateOutletScreen = function populateOutletScreen(detail) {
     var _a, _b;
@@ -182,6 +223,12 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
       outletRef.innerHTML += "<br/>";
     }
   };
+  /**
+   *
+   * @param outlet which outlet to show procesing message on
+   * shows "processing..." message on outlet
+   */
+
 
   var showProcessingMessage = function showProcessingMessage(outlet) {
     var _a, _b;
@@ -192,6 +239,41 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
       outletRef.innerHTML += "Processing...";
       outletRef.innerHTML += "<br/>";
     }
+  };
+  /**
+   *
+   * @param outlet the outlet to be cleared
+   * clears all the messages on that outlet
+   */
+
+
+  var clearOutlet = function clearOutlet(outlet) {
+    var _a, _b;
+
+    var outletRef = (_b = (_a = outletsRef.current) === null || _a === void 0 ? void 0 : _a.children[outlet]) === null || _b === void 0 ? void 0 : _b.querySelector(".outlet");
+
+    if (outletRef) {
+      outletRef.innerHTML = "";
+    }
+  };
+  /**
+   *
+   * @param index the selected config index
+   * resets the conffee machine to initial point with new config
+   */
+
+
+  var resetConfig = function resetConfig(index) {
+    for (var i = 0; i < numOutlets.current; ++i) {
+      clearOutlet(i);
+    }
+
+    coffeeMachine.current = new CoffeeMachine_1.default(config_1.convertConfigToMachineParams(config_1.default[index]));
+    beverages.current = coffeeMachine.current.getBeveragesList();
+    numOutlets.current = coffeeMachine.current.getNumOutlets();
+    setSelectedConfigIndex(index);
+    setSelectedBeverageIndex(0);
+    setIngredientsStatus(coffeeMachine.current.getIngredients());
   };
 
   react_1.useEffect(function () {
@@ -212,6 +294,18 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
     };
   }, []);
   return react_1.default.createElement("div", {
+    className: "coffee-machine-wrap"
+  }, react_1.default.createElement("h4", null, "Different configs have different amount of ingredients and different number of outlets"), react_1.default.createElement("div", {
+    className: "configs"
+  }, config_1.default.map(function (config, index) {
+    return react_1.default.createElement("button", {
+      className: "dz-button " + (index === selectedConfigIndex ? "selected" : ""),
+      key: "config-" + index,
+      onClick: function onClick() {
+        resetConfig(index);
+      }
+    }, "Config " + (index + 1));
+  })), react_1.default.createElement("div", {
     className: "coffee-machine"
   }, react_1.default.createElement("div", {
     className: "beverages"
@@ -228,7 +322,7 @@ var CoffeeMachineInterface = function CoffeeMachineInterface() {
   }, getIngredientsPanel()), react_1.default.createElement("div", {
     className: "outlets",
     ref: outletsRef
-  }, getOutletsJsx()));
+  }, getOutletsJsx())));
 };
 
 exports.default = CoffeeMachineInterface;
@@ -247,6 +341,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.convertConfigToMachineParams = void 0;
+/** The configs on which machine can be run */
+
 var machineConfigs = [{
   machine: {
     outlets: {
@@ -257,7 +353,8 @@ var machineConfigs = [{
       "Hot milk": 500,
       "Ginger syrup": 100,
       "Sugar syrup": 100,
-      "Tea leaves syrup": 100
+      "Tea leaves syrup": 100,
+      "Green mixture": 400
     },
     beverages: {
       "Hot tea": {
@@ -286,7 +383,92 @@ var machineConfigs = [{
         "Sugar syrup": 50,
         "Green mixture": 30
       }
-    }
+    },
+    ingredientsWarningLimit: 150
+  }
+}, {
+  machine: {
+    outlets: {
+      count_n: 4
+    },
+    total_items_quantity: {
+      "Hot water": 1500,
+      "Hot milk": 5000,
+      "Ginger syrup": 1000,
+      "Sugar syrup": 1900,
+      "Tea leaves syrup": 2000
+    },
+    beverages: {
+      "Hot tea": {
+        "Hot water": 200,
+        "Hot milk": 100,
+        "Ginger syrup": 10,
+        "Sugar syrup": 10,
+        "Tea leaves syrup": 30
+      },
+      "Hot coffee": {
+        "Hot water": 100,
+        "Ginger syrup": 30,
+        "Hot milk": 400,
+        "Sugar syrup": 50,
+        "Tea leaves syrup": 30
+      },
+      "Black tea": {
+        "Hot water": 300,
+        "Ginger syrup": 30,
+        "Sugar syrup": 50,
+        "Tea leaves syrup": 30
+      },
+      "Hot water": {
+        "Hot water": 100
+      },
+      "Hot milk": {
+        "Hot milk": 100
+      }
+    },
+    ingredientsWarningLimit: 1000
+  }
+}, {
+  machine: {
+    outlets: {
+      count_n: 2
+    },
+    total_items_quantity: {
+      "Hot water": 210,
+      "Hot milk": 100,
+      "Ginger syrup": 210,
+      "Sugar syrup": 480,
+      "Tea leaves syrup": 100
+    },
+    beverages: {
+      "Hot tea": {
+        "Hot water": 20,
+        "Hot milk": 10,
+        "Ginger syrup": 10,
+        "Sugar syrup": 10,
+        "Tea leaves syrup": 30
+      },
+      "Hot coffee": {
+        "Hot water": 10,
+        "Ginger syrup": 30,
+        "Hot milk": 40,
+        "Sugar syrup": 50,
+        "Tea leaves syrup": 30
+      },
+      "Black tea": {
+        "Hot water": 30,
+        "Ginger syrup": 30,
+        "Sugar syrup": 50,
+        "Tea leaves syrup": 30
+      },
+      "Green tea": {
+        "Hot water": 10,
+        "Ginger syrup": 30,
+        "Sugar syrup": 21,
+        "Green mixture": 18
+      }
+    },
+    ingredientsWarningLimit: 100
   }
 }];
 
@@ -513,6 +695,15 @@ Object.defineProperty(exports, "__esModule", ({
 var Queue_1 = __importDefault(__webpack_require__(/*! ./Queue */ "./src/utils/Queue.ts"));
 
 var helper_1 = __webpack_require__(/*! ./helper */ "./src/utils/helper.ts");
+/******
+ * 1. CoffeMachine class primarily works by making a queue for each outlet and receives can a request a request to make a certain beverage at certain outlet.
+ * 2. The machine after fulfilling the request at the mentioned outlet traverses each of the other queues as well for pending orders, thereby avoiding starvation.
+ * 3. The function that makes the beverage takes a constant harcoded time mentioned in the class (5 seconds). This subroutine/method/function is fired asynchronously, thus allowing multiple outlets to be usable at once.
+ * 4. On resolution of the beverage, a custom event is dispatched, notifying the UI of completion/failure of the task. Also the modified ingredients are also shared through another event dispatch.
+ * 5. The machine exposes methods to access the ingredients and the limit under which their amount in considered low. The machine takes a config of type @TCoffeeMachineParams as constructor parameter.
+ * 6. The machine also exposes methods to refill particular ingredient. The maximum amount of an ingredient is assumed to be 2000 units and hardcoded.
+ */
+
 
 var CoffeeMachine =
 /** @class */
@@ -527,6 +718,12 @@ function () {
       this._queues[i] = new Queue_1.default();
     }
   }
+  /**
+   *
+   * @param beverage beverage to be made
+   * @returns a promise that resolves to true if the beverage could be made, false otherwise. It also takes a 'fake' delay of @DEFAULT_INGREDIENTS_WARNING_LIMIT
+   */
+
 
   CoffeeMachine.prototype._make = function (beverage) {
     return __awaiter(this, void 0, void 0, function () {
@@ -568,6 +765,12 @@ function () {
       });
     });
   };
+  /**
+   *
+   * @param index the outlet on which beverage is requested
+   * runs a loop starting with the index and wraps to index-1, and tries to make the first beverage in each queue
+   */
+
 
   CoffeeMachine.prototype.run = function (index) {
     return __awaiter(this, void 0, void 0, function () {
@@ -623,33 +826,79 @@ function () {
       });
     });
   };
+  /**
+   *
+   * @param beverage beverage to be made
+   * @param outlet outlet number on which beverage will be served
+   */
+
 
   CoffeeMachine.prototype.makeBeverage = function (beverage, outlet) {
     this._queues[outlet].push(beverage);
 
     this.run(outlet);
   };
+  /**
+   *
+   * @param ingredient ingredient name to be refilled
+   */
+
+
+  CoffeeMachine.prototype.refill = function (ingredient) {
+    this._state.ingredients[ingredient] = CoffeeMachine.MAX_INGREDIENT_LIMIT;
+    helper_1.dispatchCustomData("INGREDIENTS_STATUS", this._state.ingredients);
+  };
+  /**
+   *
+   * @returns list of beverages according to the config passed
+   */
+
 
   CoffeeMachine.prototype.getBeveragesList = function () {
     return Object.keys(this._state.recipies);
   };
+  /**
+   *
+   * @returns the number of outlets according to the config passed
+   */
+
 
   CoffeeMachine.prototype.getNumOutlets = function () {
     return this._state.outlets;
   };
+  /**
+   *
+   * @returns the limit under which ingredients are considered to have low quantity
+   */
+
 
   CoffeeMachine.prototype.getIngredientsWarningLimit = function () {
     var _a;
 
     return (_a = this._state.ingredientsWarningLimit) !== null && _a !== void 0 ? _a : CoffeeMachine.DEFAULT_INGREDIENTS_WARNING_LIMIT;
   };
+  /**
+   *
+   * @returns the an object with each ingredient as key and their initial amount as value
+   */
+
 
   CoffeeMachine.prototype.getIngredients = function () {
     return this._state.ingredients;
   };
+  /**
+   *
+   * @returns max amount an ingredient can have
+   */
+
+
+  CoffeeMachine.getMaxIngredientLimit = function () {
+    return CoffeeMachine.MAX_INGREDIENT_LIMIT;
+  };
 
   CoffeeMachine.DEFAULT_INGREDIENTS_WARNING_LIMIT = 150;
   CoffeeMachine.BEVERAGE_MAKE_DELAY_MS = 5000;
+  CoffeeMachine.MAX_INGREDIENT_LIMIT = 2000;
   return CoffeeMachine;
 }();
 
@@ -668,6 +917,9 @@ exports.default = CoffeeMachine;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+/**
+ * A normal generic queue with O(1) push and O(1) pop and front, implemented with a linked list
+ */
 
 var Queue =
 /** @class */
@@ -729,6 +981,13 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.getIngredientsIndicator = exports.dispatchCustomData = void 0;
+/**
+ *
+ * @param eventName the name of the event
+ * @param data custom data to be passed with the event
+ *
+ * dispatches the custom event on window object with the provided data - @data
+ */
 
 function dispatchCustomData(eventName, data) {
   window.dispatchEvent(new CustomEvent(eventName, {
@@ -737,6 +996,12 @@ function dispatchCustomData(eventName, data) {
 }
 
 exports.dispatchCustomData = dispatchCustomData;
+/**
+ *
+ * @param data map of ingredients and their amount
+ * @param limit limit under which ingredients are considered to have low quantity
+ * @returns a map of each ingredient to "low"/"ok"
+ */
 
 function getIngredientsIndicator(data, limit) {
   var obj = {};
@@ -769,7 +1034,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_cssWithMappingToString_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "body * {\n  font-family: \"Ubuntu Condensed\", sans-serif; }\n\n.dz-button {\n  padding: 7px 14px;\n  border: 1px solid gainsboro;\n  border-radius: 2px;\n  background-color: #fafafa;\n  cursor: pointer; }\n  .dz-button:hover {\n    border: 1px solid #969696; }\n  .dz-button.selected {\n    border: 1px solid transparent;\n    background-color: #0078db;\n    color: #fafafa;\n    font-weight: 500; }\n\n.coffee-machine {\n  min-width: 300px;\n  max-width: 700px;\n  border: 3px solid #646464;\n  padding: 20px 10px;\n  display: flex;\n  flex-direction: column;\n  border-radius: 2px; }\n  .coffee-machine .beverages {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: center;\n    margin-bottom: 30px; }\n    .coffee-machine .beverages .dz-button {\n      flex-shrink: 0;\n      margin: 0px 10px 5px 0px;\n      font-size: 16px;\n      padding: 10px 20px; }\n  .coffee-machine .ingredients {\n    margin-bottom: 30px;\n    align-self: center; }\n    .coffee-machine .ingredients .ingredient-indicator {\n      display: flex;\n      align-items: center;\n      margin-bottom: 5px; }\n      .coffee-machine .ingredients .ingredient-indicator .dot {\n        border-radius: 11px;\n        width: 10px;\n        height: 10px;\n        margin-right: 10px; }\n      .coffee-machine .ingredients .ingredient-indicator .low {\n        background-color: #e2342f; }\n      .coffee-machine .ingredients .ingredient-indicator .ok {\n        background-color: #31ab3d; }\n  .coffee-machine .outlets {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: center; }\n    .coffee-machine .outlets .outlet-wrap {\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      margin: 0px 20px 5px 0px; }\n    .coffee-machine .outlets .outlet {\n      width: 200px;\n      height: 200px;\n      box-sizing: border-box;\n      overflow: auto;\n      border-radius: 8px;\n      background-color: #141414;\n      color: #fafafa;\n      padding: 10px; }\n    .coffee-machine .outlets .outlet-msg {\n      margin-bottom: 10px; }\n      .coffee-machine .outlets .outlet-msg.success {\n        color: #31ab3d; }\n      .coffee-machine .outlets .outlet-msg.error {\n        color: #e2342f; }\n    .coffee-machine .outlets .press-btn {\n      margin-top: 20px; }\n", "",{"version":3,"sources":["webpack://./src/styles/common.scss","webpack://./src/components/coffee-machine/coffee-machine.scss"],"names":[],"mappings":"AASA;EAEI,2CAA2C,EAAA;;AAI/C;EACE,iBAAiB;EACjB,2BAfwB;EAgBxB,kBAAkB;EAClB,yBAhBwB;EAiBxB,eAAe,EAAA;EALjB;IAQI,yBAnBsB,EAAA;EAW1B;IAYI,6BAA6B;IAC7B,yBAvBW;IAwBX,cA1BsB;IA2BtB,gBAAgB,EAAA;;AC5BpB;EACE,gBAAgB;EAChB,gBAAgB;EAChB,yBDLwB;ECMxB,kBAAkB;EAClB,aAAa;EACb,sBAAsB;EACtB,kBAAkB,EAAA;EAPpB;IAUI,aAAa;IACb,eAAe;IACf,uBAAuB;IACvB,mBAAmB,EAAA;IAbvB;MAgBM,cAAc;MACd,wBAAwB;MACxB,eAAe;MACf,kBAAkB,EAAA;EAnBxB;IAwBI,mBAAmB;IACnB,kBAAkB,EAAA;IAzBtB;MA4BM,aAAa;MACb,mBAAmB;MACnB,kBAAkB,EAAA;MA9BxB;QAiCQ,mBAAmB;QACnB,WAAW;QACX,YAAY;QACZ,kBAAkB,EAAA;MApC1B;QAwCQ,yBDpCM,EAAA;MCJd;QA4CQ,yBDvCQ,EAAA;ECLhB;IAkDI,aAAa;IACb,eAAe;IACf,uBAAuB,EAAA;IApD3B;MAuDM,aAAa;MACb,sBAAsB;MACtB,mBAAmB;MACnB,wBAAwB,EAAA;IA1D9B;MA8DM,YAAY;MACZ,aAAa;MACb,sBAAsB;MACtB,cAAc;MACd,kBAAkB;MAClB,yBDpEiB;MCqEjB,cDnEoB;MCoEpB,aAAa,EAAA;IArEnB;MAyEM,mBAAmB,EAAA;MAzEzB;QA4EQ,cDvEQ,EAAA;MCLhB;QAgFQ,cD5EM,EAAA;ICJd;MAqFM,gBAAgB,EAAA","sourcesContent":["$gray1: rgb(100, 100, 100);\n$gray2: rgb(20, 20, 20);\n$gray3: rgb(220, 220, 220);\n$gray4: rgb(250, 250, 250);\n$gray5: rgb(150, 150, 150);\n$blue0: #0078db;\n$red0: #e2342f;\n$green0: #31ab3d;\n\nbody {\n  * {\n    font-family: \"Ubuntu Condensed\", sans-serif;\n  }\n}\n\n.dz-button {\n  padding: 7px 14px;\n  border: 1px solid $gray3;\n  border-radius: 2px;\n  background-color: $gray4;\n  cursor: pointer;\n\n  &:hover {\n    border: 1px solid $gray5;\n  }\n\n  &.selected {\n    border: 1px solid transparent;\n    background-color: $blue0;\n    color: $gray4;\n    font-weight: 500;\n  }\n}\n","@import \"./../../styles/common.scss\";\n\n.coffee-machine {\n  min-width: 300px;\n  max-width: 700px;\n  border: 3px solid $gray1;\n  padding: 20px 10px;\n  display: flex;\n  flex-direction: column;\n  border-radius: 2px;\n\n  .beverages {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: center;\n    margin-bottom: 30px;\n\n    .dz-button {\n      flex-shrink: 0;\n      margin: 0px 10px 5px 0px;\n      font-size: 16px;\n      padding: 10px 20px;\n    }\n  }\n\n  .ingredients {\n    margin-bottom: 30px;\n    align-self: center;\n\n    .ingredient-indicator {\n      display: flex;\n      align-items: center;\n      margin-bottom: 5px;\n\n      .dot {\n        border-radius: 11px;\n        width: 10px;\n        height: 10px;\n        margin-right: 10px;\n      }\n\n      .low {\n        background-color: $red0;\n      }\n\n      .ok {\n        background-color: $green0;\n      }\n    }\n  }\n\n  .outlets {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: center;\n\n    .outlet-wrap {\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      margin: 0px 20px 5px 0px;\n    }\n\n    .outlet {\n      width: 200px;\n      height: 200px;\n      box-sizing: border-box;\n      overflow: auto;\n      border-radius: 8px;\n      background-color: $gray2;\n      color: $gray4;\n      padding: 10px;\n    }\n\n    .outlet-msg {\n      margin-bottom: 10px;\n\n      &.success {\n        color: $green0;\n      }\n\n      &.error {\n        color: $red0;\n      }\n    }\n\n    .press-btn {\n      margin-top: 20px;\n    }\n  }\n}\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, "body * {\n  font-family: \"Ubuntu Condensed\", sans-serif; }\n\n.dz-button {\n  padding: 7px 14px;\n  border: 1px solid gainsboro;\n  border-radius: 2px;\n  background-color: #fafafa;\n  cursor: pointer; }\n  .dz-button:hover {\n    border: 1px solid #969696; }\n  .dz-button.selected {\n    border: 1px solid transparent;\n    background-color: #0078db;\n    color: #fafafa;\n    font-weight: 500; }\n\n.coffee-machine-wrap {\n  margin: 50px 0px 0px 30px; }\n  .coffee-machine-wrap .configs {\n    display: flex;\n    flex-wrap: wrap;\n    margin-bottom: 30px; }\n    .coffee-machine-wrap .configs .dz-button {\n      flex-shrink: 0;\n      margin: 0px 10px 5px 0px;\n      font-size: 16px;\n      padding: 10px 20px; }\n  .coffee-machine-wrap .coffee-machine {\n    min-width: 300px;\n    max-width: 900px;\n    width: auto;\n    border: 3px solid #646464;\n    padding: 20px 10px;\n    display: flex;\n    flex-direction: column;\n    border-radius: 2px; }\n    .coffee-machine-wrap .coffee-machine .beverages {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center;\n      margin-bottom: 30px; }\n      .coffee-machine-wrap .coffee-machine .beverages .dz-button {\n        flex-shrink: 0;\n        margin: 0px 10px 5px 0px;\n        font-size: 16px;\n        padding: 10px 20px; }\n    .coffee-machine-wrap .coffee-machine .ingredients {\n      margin-bottom: 30px;\n      align-self: center; }\n      .coffee-machine-wrap .coffee-machine .ingredients .ingredient-indicator {\n        display: flex;\n        align-items: center;\n        margin-bottom: 5px; }\n        .coffee-machine-wrap .coffee-machine .ingredients .ingredient-indicator .dot {\n          border-radius: 11px;\n          width: 10px;\n          height: 10px;\n          margin-right: 10px; }\n        .coffee-machine-wrap .coffee-machine .ingredients .ingredient-indicator .low {\n          background-color: #e2342f; }\n        .coffee-machine-wrap .coffee-machine .ingredients .ingredient-indicator .ok {\n          background-color: #31ab3d; }\n      .coffee-machine-wrap .coffee-machine .ingredients .refill-link {\n        padding: 4px 10px; }\n        .coffee-machine-wrap .coffee-machine .ingredients .refill-link:hover {\n          text-decoration: underline; }\n    .coffee-machine-wrap .coffee-machine .outlets {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center; }\n      .coffee-machine-wrap .coffee-machine .outlets .outlet-wrap {\n        display: flex;\n        flex-direction: column;\n        align-items: center;\n        margin: 0px 20px 5px 0px; }\n      .coffee-machine-wrap .coffee-machine .outlets .outlet {\n        width: 200px;\n        height: 200px;\n        box-sizing: border-box;\n        overflow: auto;\n        border-radius: 8px;\n        background-color: #141414;\n        color: #fafafa;\n        padding: 10px; }\n      .coffee-machine-wrap .coffee-machine .outlets .outlet-msg {\n        margin-bottom: 10px; }\n        .coffee-machine-wrap .coffee-machine .outlets .outlet-msg.success {\n          color: #31ab3d; }\n        .coffee-machine-wrap .coffee-machine .outlets .outlet-msg.error {\n          color: #e2342f; }\n      .coffee-machine-wrap .coffee-machine .outlets .button-wrap {\n        margin-top: 20px; }\n      .coffee-machine-wrap .coffee-machine .outlets .press-btn {\n        margin-right: 15px; }\n", "",{"version":3,"sources":["webpack://./src/styles/common.scss","webpack://./src/components/coffee-machine/coffee-machine.scss"],"names":[],"mappings":"AASA;EAEI,2CAA2C,EAAA;;AAI/C;EACE,iBAAiB;EACjB,2BAfwB;EAgBxB,kBAAkB;EAClB,yBAhBwB;EAiBxB,eAAe,EAAA;EALjB;IAQI,yBAnBsB,EAAA;EAW1B;IAYI,6BAA6B;IAC7B,yBAvBW;IAwBX,cA1BsB;IA2BtB,gBAAgB,EAAA;;AC5BpB;EACE,yBAAyB,EAAA;EAD3B;IAII,aAAa;IACb,eAAe;IACf,mBAAmB,EAAA;IANvB;MASM,cAAc;MACd,wBAAwB;MACxB,eAAe;MACf,kBAAkB,EAAA;EAZxB;IAiBI,gBAAgB;IAChB,gBAAgB;IAChB,WAAW;IACX,yBDtBsB;ICuBtB,kBAAkB;IAClB,aAAa;IACb,sBAAsB;IACtB,kBAAkB,EAAA;IAxBtB;MA2BM,aAAa;MACb,eAAe;MACf,uBAAuB;MACvB,mBAAmB,EAAA;MA9BzB;QAiCQ,cAAc;QACd,wBAAwB;QACxB,eAAe;QACf,kBAAkB,EAAA;IApC1B;MAyCM,mBAAmB;MACnB,kBAAkB,EAAA;MA1CxB;QA6CQ,aAAa;QACb,mBAAmB;QACnB,kBAAkB,EAAA;QA/C1B;UAkDU,mBAAmB;UACnB,WAAW;UACX,YAAY;UACZ,kBAAkB,EAAA;QArD5B;UAyDU,yBDrDI,EAAA;QCJd;UA6DU,yBDxDM,EAAA;MCLhB;QAkEQ,iBAAiB,EAAA;QAlEzB;UAqEU,0BAA0B,EAAA;IArEpC;MA2EM,aAAa;MACb,eAAe;MACf,uBAAuB,EAAA;MA7E7B;QAgFQ,aAAa;QACb,sBAAsB;QACtB,mBAAmB;QACnB,wBAAwB,EAAA;MAnFhC;QAuFQ,YAAY;QACZ,aAAa;QACb,sBAAsB;QACtB,cAAc;QACd,kBAAkB;QAClB,yBD7Fe;QC8Ff,cD5FkB;QC6FlB,aAAa,EAAA;MA9FrB;QAkGQ,mBAAmB,EAAA;QAlG3B;UAqGU,cDhGM,EAAA;QCLhB;UAyGU,cDrGI,EAAA;MCJd;QA8GQ,gBAAgB,EAAA;MA9GxB;QAkHQ,kBAAkB,EAAA","sourcesContent":["$gray1: rgb(100, 100, 100);\n$gray2: rgb(20, 20, 20);\n$gray3: rgb(220, 220, 220);\n$gray4: rgb(250, 250, 250);\n$gray5: rgb(150, 150, 150);\n$blue0: #0078db;\n$red0: #e2342f;\n$green0: #31ab3d;\n\nbody {\n  * {\n    font-family: \"Ubuntu Condensed\", sans-serif;\n  }\n}\n\n.dz-button {\n  padding: 7px 14px;\n  border: 1px solid $gray3;\n  border-radius: 2px;\n  background-color: $gray4;\n  cursor: pointer;\n\n  &:hover {\n    border: 1px solid $gray5;\n  }\n\n  &.selected {\n    border: 1px solid transparent;\n    background-color: $blue0;\n    color: $gray4;\n    font-weight: 500;\n  }\n}\n","@import \"./../../styles/common.scss\";\n\n.coffee-machine-wrap {\n  margin: 50px 0px 0px 30px;\n\n  .configs {\n    display: flex;\n    flex-wrap: wrap;\n    margin-bottom: 30px;\n\n    .dz-button {\n      flex-shrink: 0;\n      margin: 0px 10px 5px 0px;\n      font-size: 16px;\n      padding: 10px 20px;\n    }\n  }\n\n  .coffee-machine {\n    min-width: 300px;\n    max-width: 900px;\n    width: auto;\n    border: 3px solid $gray1;\n    padding: 20px 10px;\n    display: flex;\n    flex-direction: column;\n    border-radius: 2px;\n\n    .beverages {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center;\n      margin-bottom: 30px;\n\n      .dz-button {\n        flex-shrink: 0;\n        margin: 0px 10px 5px 0px;\n        font-size: 16px;\n        padding: 10px 20px;\n      }\n    }\n\n    .ingredients {\n      margin-bottom: 30px;\n      align-self: center;\n\n      .ingredient-indicator {\n        display: flex;\n        align-items: center;\n        margin-bottom: 5px;\n\n        .dot {\n          border-radius: 11px;\n          width: 10px;\n          height: 10px;\n          margin-right: 10px;\n        }\n\n        .low {\n          background-color: $red0;\n        }\n\n        .ok {\n          background-color: $green0;\n        }\n      }\n\n      .refill-link {\n        padding: 4px 10px;\n\n        &:hover {\n          text-decoration: underline;\n        }\n      }\n    }\n\n    .outlets {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center;\n\n      .outlet-wrap {\n        display: flex;\n        flex-direction: column;\n        align-items: center;\n        margin: 0px 20px 5px 0px;\n      }\n\n      .outlet {\n        width: 200px;\n        height: 200px;\n        box-sizing: border-box;\n        overflow: auto;\n        border-radius: 8px;\n        background-color: $gray2;\n        color: $gray4;\n        padding: 10px;\n      }\n\n      .outlet-msg {\n        margin-bottom: 10px;\n\n        &.success {\n          color: $green0;\n        }\n\n        &.error {\n          color: $red0;\n        }\n      }\n\n      .button-wrap {\n        margin-top: 20px;\n      }\n\n      .press-btn {\n        margin-right: 15px;\n      }\n    }\n  }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

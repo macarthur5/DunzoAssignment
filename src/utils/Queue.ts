@@ -3,6 +3,10 @@ type TNode<T> = {
   next: TNode<T> | null;
 };
 
+/**
+ * A normal generic queue with O(1) push and O(1) pop and front, implemented with a linked list
+ */
+
 class Queue<T> {
   private _head: TNode<T> | null;
   private _tail: TNode<T> | null;
