@@ -24,7 +24,7 @@ class CoffeeMachine {
 
   private static DEFAULT_INGREDIENTS_WARNING_LIMIT = 150;
   private static BEVERAGE_MAKE_DELAY_MS = 5000;
-  private static MAX_INGREDIENT_LIMIT = 2000;
+  private static MAX_INGREDIENT_LIMIT = 5000;
 
   constructor(params: TCoffeeMachineParams) {
     this._state = {

@@ -898,7 +898,7 @@ function () {
 
   CoffeeMachine.DEFAULT_INGREDIENTS_WARNING_LIMIT = 150;
   CoffeeMachine.BEVERAGE_MAKE_DELAY_MS = 5000;
-  CoffeeMachine.MAX_INGREDIENT_LIMIT = 2000;
+  CoffeeMachine.MAX_INGREDIENT_LIMIT = 5000;
   return CoffeeMachine;
 }();
 
