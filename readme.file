@@ -1,0 +1,9 @@
+To run on Ubuntu:
+
+1. install node and npm.
+2. In project directory, run node start.js.
+3. open dist/index.html on browser.
+
+or,
+
+open http://astonishing-brain.surge.sh/ in browser to see the hosted version.
